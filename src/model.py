@@ -13,8 +13,10 @@ from material import read_materials_from_json
 nltk.download('punkt')
 nltk.download('stopwords')
 
+# Receive input file
+file_path = input("Enter the path to the materials JSON file: ")
 # Load JSON data from file
-materials = read_materials_from_json("../materials.json")
+materials = read_materials_from_json(file_path="materials.json")
 
 # Preprocess data
 stop_words = set(stopwords.words('english'))
