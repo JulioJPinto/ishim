@@ -75,19 +75,6 @@ def build_lsi_model(texts_processed, num_topics=3, model_path='models/lsi_model.
     lsi_model.save(model_path)
     return lsi_model, texts_corpus
 
-def build_word2vec_model(texts_processed, vector_size=100, window=5, min_count=1, workers=4, model_path='models/word2vec.model'):
-    """Builds and saves a Word2Vec model."""
-    word2vec_model = Word2Vec(
-        sentences=texts_processed,
-        vector_size=vector_size,
-        window=window,
-        min_count=min_count,
-        workers=workers
-    )
-    
-    word2vec_model.save(model_path)
-    return word2vec_model
-
 def build_doc2vec_model(texts_processed, vector_size=100, window=5, min_count=1, workers=4, model_path='models/doc2vec.model'):
     """Builds and saves a Doc2Vec model."""
     tagged_docs = [TaggedDocument(words=doc, tags=[str(i)]) for i, doc in enumerate(texts_processed)]
@@ -109,12 +96,10 @@ def load_model(model_type, model_path):
         return LdaModel.load(model_path)
     elif model_type == 'lsi':
         return LsiModel.load(model_path)
-    elif model_type == 'word2vec':
-        return Word2Vec.load(model_path)
     elif model_type == 'doc2vec':
         return Doc2Vec.load(model_path)
     else:
-        raise ValueError("Invalid model type. Please choose from 'lda', 'lsi', 'word2vec', or 'doc2vec'.")
+        raise ValueError("Invalid model type. Please choose from 'lda', 'lsi', or 'doc2vec'.")
 
 def compute_topic_vectors(lda_model, texts_corpus):
     """Computes topic vectors for all materials using LDA model."""
@@ -175,7 +160,7 @@ def main():
     
     texts_processed = tokenize_materials(materials)
     
-    model_type = input("Enter the model type (lda/lsi/word2vec/doc2vec): ").strip().lower()
+    model_type = input("Enter the model type (lda/lsi/doc2vec): ").strip().lower()
     model_path = f'{model_type}_model.model'
     
     if os.path.exists(model_path):
@@ -189,23 +174,15 @@ def main():
         elif model_type == 'lsi':
             model, texts_corpus = build_lsi_model(texts_processed, model_path=model_path)
             all_vectors = compute_lsi_vectors(model, texts_corpus)
-        elif model_type == 'word2vec':
-            model = build_word2vec_model(texts_processed, model_path=model_path)
-            all_vectors = [model.wv[preprocess_text(material.material)] for material in materials]
         elif model_type == 'doc2vec':
             model = build_doc2vec_model(texts_processed, model_path=model_path)
             all_vectors = compute_doc2vec_vectors(model, texts_processed)
         else:
-            print("Error: Invalid model type. Please choose from 'lda', 'lsi', 'word2vec', or 'doc2vec'.")
+            print("Error: Invalid model type. Please choose from 'lda', 'lsi', or 'doc2vec'.")
             exit(1)
     
     material_name = input("Enter the name of the material to find similarities: ")
-    
-    similar_material_indices, similarity_scores = find_similar_materials(all_vectors, materials, material_name)
-    
-    print(f'Materials most similar to {material_name}:')
-    for idx, score in zip(similar_material_indices, similarity_scores):
-        print(f'{materials[idx].material} with similarity score of {score:.4f}')
+
         
 if __name__ == "__main__":
     main()
