@@ -6,22 +6,25 @@ import gensim
 import gensim.corpora as corpora
 from gensim.models.ldamodel import LdaModel
 
+from material import Material, Details
+from material import read_materials_from_json
+
 # Download required NLTK data files
 nltk.download('punkt')
 nltk.download('stopwords')
 
 # Load JSON data from file
-with open('../materials.json', 'r') as file:
-    materials_data = json.load(file)
+materials = read_materials_from_json("../materials.json")
 
 # Preprocess data
 stop_words = set(stopwords.words('english'))
 
 # Combine all details into a single string for each material
 texts = []
-for material in materials_data:
-    detail_string = " ".join(f"{key} {value}" for key, value in material["details"].items())
-    texts.append(detail_string)
+for material in materials:
+    texts.append(
+        f'{material.material} {str(material.details).replace(", ", " ")}'
+    )
 
 # Tokenize and remove stopwords
 texts_processed = [
