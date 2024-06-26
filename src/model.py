@@ -27,7 +27,7 @@ def preprocess_text(text):
 def load_materials_from_json(file_path):
     """Loads materials from a JSON file."""
     try:
-        materials = read_materials_from_json(file_path=file_path)
+        materials = read_materials_from_json(file_path="materials.json")
         return materials
     except FileNotFoundError:
         print(f"Error: The file at {file_path} was not found.")
@@ -161,7 +161,7 @@ def main():
     texts_processed = tokenize_materials(materials)
     
     model_type = input("Enter the model type (lda/lsi/doc2vec): ").strip().lower()
-    model_path = f'{model_type}_model.model'
+    model_path = f'models/{model_type}_model.model'
     
     if os.path.exists(model_path):
         print(f"Loading existing {model_type} model...")
@@ -182,6 +182,13 @@ def main():
             exit(1)
     
     material_name = input("Enter the name of the material to find similarities: ")
+    
+    similar_material_indices, similarity_scores = find_similar_materials(all_vectors, materials, material_name)
+    
+    print(f'Materials most similar to {material_name}:')
+    for idx, score in zip(similar_material_indices, similarity_scores):
+        print(f'{materials[idx].material} with similarity score of {score:.4f}')
+    
 
         
 if __name__ == "__main__":

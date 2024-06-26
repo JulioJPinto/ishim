@@ -39,6 +39,7 @@ class Material:
         }
         
 def read_materials_from_json(file_path):
+    """Reads materials data from a JSON file and gives back a dictionary of materials-details."""
     with open(file_path, 'r') as file:
         materials_data = json.load(file)
     materials = []
