@@ -12,8 +12,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import os
 
-from material import Material, Details
-from material import read_materials_from_json
+# Assuming Material, Details, and read_materials_from_json are defined in material.py
+from material import Material, Details, read_materials_from_json
 
 # Download required NLTK data files
 nltk.download('punkt')
@@ -27,7 +27,7 @@ def preprocess_text(text):
 def load_materials_from_json(file_path):
     """Loads materials from a JSON file."""
     try:
-        materials = read_materials_from_json(file_path="materials.json")
+        materials = read_materials_from_json(file_path)
         return materials
     except FileNotFoundError:
         print(f"Error: The file at {file_path} was not found.")
@@ -163,9 +163,19 @@ def main():
     model_type = input("Enter the model type (lda/lsi/doc2vec): ").strip().lower()
     model_path = f'models/{model_type}_model.model'
     
+    all_vectors = None  # Initialize all_vectors to ensure it has a default value
+    
     if os.path.exists(model_path):
         print(f"Loading existing {model_type} model...")
         model = load_model(model_type, model_path)
+        if model_type == 'lda':
+            texts_corpus = [model.id2word.doc2bow(text) for text in texts_processed]
+            all_vectors = compute_topic_vectors(model, texts_corpus)
+        elif model_type == 'lsi':
+            texts_corpus = [model.id2word.doc2bow(text) for text in texts_processed]
+            all_vectors = compute_lsi_vectors(model, texts_corpus)
+        elif model_type == 'doc2vec':
+            all_vectors = compute_doc2vec_vectors(model, texts_processed)
     else:
         print(f"Building new {model_type} model...")
         if model_type == 'lda':
@@ -181,6 +191,10 @@ def main():
             print("Error: Invalid model type. Please choose from 'lda', 'lsi', or 'doc2vec'.")
             exit(1)
     
+    if all_vectors is None:
+        print("Error: Failed to compute vectors. Please check the model and input data.")
+        exit(1)
+    
     material_name = input("Enter the name of the material to find similarities: ")
     
     similar_material_indices, similarity_scores = find_similar_materials(all_vectors, materials, material_name)
@@ -188,8 +202,7 @@ def main():
     print(f'Materials most similar to {material_name}:')
     for idx, score in zip(similar_material_indices, similarity_scores):
         print(f'{materials[idx].material} with similarity score of {score:.4f}')
-    
 
-        
 if __name__ == "__main__":
     main()
+
