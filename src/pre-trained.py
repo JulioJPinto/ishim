@@ -2,6 +2,7 @@ import gensim
 import numpy as np
 from numpy.linalg import norm
 import json
+import os
 
 
 # For this file im using w2v.vectors.vk
@@ -47,23 +48,28 @@ def most_similar_phrase(target_phrase, precomputed_vectors, word_vectors):
 
 # Example phrases
 phrases = [
-    "sample material description",
-    "different material type",
-    "another example of material",
-    "yet another description of a material",
+    "Revestimento de pedra natural RUBICER FERRARA 15X60CM",
+    "Revestimento cerâmico Artens Peak Brown 17x52 cm",
+    "Revestimento decorativo preto",
+    "Revestimento decorativo Artens Stone Mikeno preto",
 ]
 
-# # Precompute vectors for the phrases
-# precomputed_vectors = precompute_phrase_vectors(phrases, word_vectors)
+# Define the filename for the precomputed vectors
+filename = 'precomputed_vectors.json'
 
-# # Save the precomputed vectors to a JSON file
-# save_vectors_to_json(precomputed_vectors, 'precomputed_vectors.json')
-
-# Load the precomputed vectors from the JSON file
-loaded_vectors = load_vectors_from_json('precomputed_vectors.json')
+# Check if the precomputed vectors file exists
+if os.path.exists(filename):
+    # Load the precomputed vectors from the JSON file
+    loaded_vectors = load_vectors_from_json(filename)
+else:
+    # Precompute vectors for the phrases
+    precomputed_vectors = precompute_phrase_vectors(phrases, word_vectors)
+    # Save the precomputed vectors to a JSON file
+    save_vectors_to_json(precomputed_vectors, filename)
+    loaded_vectors = precomputed_vectors
 
 # Find the most similar phrases
-target_phrase = "example material description"
+target_phrase = "Revestimento decorativo Artens Stone Mikeno preto"
 similar_phrases = most_similar_phrase(target_phrase, loaded_vectors, word_vectors)
 for phrase, similarity in similar_phrases:
     print(f"Phrase: {phrase}, Similarity: {similarity:.4f}")
