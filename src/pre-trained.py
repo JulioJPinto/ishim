@@ -1,75 +1,50 @@
-import gensim
 import numpy as np
-from numpy.linalg import norm
 import json
-import os
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
-
-# For this file im using w2v.vectors.vk
-# These are pre-trained models with multiple portuguese words
-# Source: https://github.com/rdenadai/WordEmbeddingPortugues
-
-# Load the KeyedVectors
-word_vectors = gensim.models.KeyedVectors.load("models/w2v.vectors.kv", mmap='r')
-
-def phrase_vector(phrase, word_vectors):
-    words = phrase.split()
-    word_vecs = [word_vectors[word] for word in words if word in word_vectors]
-    if not word_vecs:
-        return np.zeros(word_vectors.vector_size)
-    return np.mean(word_vecs, axis=0)
-
-def cosine_similarity(vec1, vec2):
-    return np.dot(vec1, vec2) / (norm(vec1) * norm(vec2))
-
-def precompute_phrase_vectors(phrases, word_vectors):
-    phrase_vecs = {}
-    for phrase in phrases:
-        phrase_vecs[phrase] = phrase_vector(phrase, word_vectors).tolist()  # Convert to list for JSON serialization
-    return phrase_vecs
-
-def save_vectors_to_json(phrase_vecs, filename):
-    with open(filename, 'w') as f:
-        json.dump(phrase_vecs, f)
-
-def load_vectors_from_json(filename):
-    with open(filename, 'r') as f:
-        phrase_vecs = json.load(f)
-    return {phrase: np.array(vec) for phrase, vec in phrase_vecs.items()}
-
-def most_similar_phrase(target_phrase, precomputed_vectors, word_vectors):
-    target_vec = phrase_vector(target_phrase, word_vectors)
-    similarities = []
-    for phrase, vec in precomputed_vectors.items():
-        similarity = cosine_similarity(target_vec, vec)
-        similarities.append((phrase, similarity))
-    similarities.sort(key=lambda x: x[1], reverse=True)
-    return similarities
-
-# Example phrases
-phrases = [
+# JSON array of phrases (you can replace this with an actual JSON input if needed)
+phrases_json = '''
+[
     "Revestimento de pedra natural RUBICER FERRARA 15X60CM",
     "Revestimento cerâmico Artens Peak Brown 17x52 cm",
     "Revestimento decorativo preto",
-    "Revestimento decorativo Artens Stone Mikeno preto",
+    "Revestimento decorativo Artens Stone Mikeno preto"
 ]
+'''
 
-# Define the filename for the precomputed vectors
-filename = 'precomputed_vectors.json'
+# Parse the JSON array to get the list of phrases
+phrases = json.loads(phrases_json)
 
-# Check if the precomputed vectors file exists
-if os.path.exists(filename):
-    # Load the precomputed vectors from the JSON file
-    loaded_vectors = load_vectors_from_json(filename)
-else:
-    # Precompute vectors for the phrases
-    precomputed_vectors = precompute_phrase_vectors(phrases, word_vectors)
-    # Save the precomputed vectors to a JSON file
-    save_vectors_to_json(precomputed_vectors, filename)
-    loaded_vectors = precomputed_vectors
+# Load pre-trained Sentence-BERT model
+model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
-# Find the most similar phrases
-target_phrase = "Revestimento decorativo Artens Stone Mikeno preto"
-similar_phrases = most_similar_phrase(target_phrase, loaded_vectors, word_vectors)
-for phrase, similarity in similar_phrases:
-    print(f"Phrase: {phrase}, Similarity: {similarity:.4f}")
+# Encode the phrases
+phrase_embeddings = model.encode(phrases)
+
+# Function to find top 5 most similar phrases to the input phrase
+def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, top_n=5):
+    # Encode the input phrase
+    input_embedding = model.encode([input_phrase])
+    
+    # Calculate cosine similarity between the input phrase and each phrase in the list
+    similarities = cosine_similarity(input_embedding, phrase_embeddings)[0]
+    
+    # Get the indices of the top N most similar phrases
+    top_indices = similarities.argsort()[-top_n:][::-1]
+    
+    # Get the top N most similar phrases and their similarity scores
+    top_phrases = [(phrases[i], similarities[i]) for i in top_indices]
+    
+    return top_phrases
+
+# Example user input
+input_phrase = "Revestimento Artens 17x52 cm"
+
+# Find top 5 most similar phrases
+top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings)
+
+# Print the top 5 most similar phrases
+print("Top 5 most similar phrases:")
+for phrase, score in top_similar_phrases:
+    print(f"Phrase: {phrase}, Similarity Score: {score:.4f}")
