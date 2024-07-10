@@ -1,28 +1,46 @@
+import os
 import numpy as np
-import json
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+import pickle
 
-# JSON array of phrases (you can replace this with an actual JSON input if needed)
-phrases_json = '''
-[
-    "Revestimento de pedra natural RUBICER FERRARA 15X60CM",
-    "Revestimento cerâmico Artens Peak Brown 17x52 cm",
-    "Revestimento decorativo preto",
-    "Revestimento decorativo Artens Stone Mikeno preto"
-]
-'''
-
-# Parse the JSON array to get the list of phrases
-phrases = json.loads(phrases_json)
+# Define file paths
+csv_file_path = 'sorted_orcamento.csv'
+embeddings_file_path = 'embeddings_orcamento.pkl'
 
 # Load pre-trained Sentence-BERT model
 model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
-# Encode the phrases
-phrase_embeddings = model.encode(phrases)
+# Function to check if the embeddings need to be computed
+def embeddings_need_update(csv_file, embeddings_file):
+    if not os.path.exists(embeddings_file):
+        return True
+    return os.path.getmtime(csv_file) > os.path.getmtime(embeddings_file)
 
-# Function to find top 5 most similar phrases to the input phrase
+# Function to compute and save embeddings
+def compute_and_save_embeddings(csv_file, embeddings_file):
+    # Load phrases from CSV
+    df = pd.read_csv(csv_file)
+    phrases = df['design'].tolist()
+    
+    # Encode the phrases
+    phrase_embeddings = model.encode(phrases)
+    
+    # Save the embeddings and phrases
+    with open(embeddings_file, 'wb') as f:
+        pickle.dump((phrases, phrase_embeddings), f)
+    
+    return phrases, phrase_embeddings
+
+# Load or compute embeddings as needed
+if embeddings_need_update(csv_file_path, embeddings_file_path):
+    phrases, phrase_embeddings = compute_and_save_embeddings(csv_file_path, embeddings_file_path)
+else:
+    with open(embeddings_file_path, 'rb') as f:
+        phrases, phrase_embeddings = pickle.load(f)
+
+# Function to find top N most similar phrases to the input phrase
 def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, top_n=5):
     # Encode the input phrase
     input_embedding = model.encode([input_phrase])
@@ -39,7 +57,7 @@ def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, top_n=5):
     return top_phrases
 
 # Example user input
-input_phrase = "Revestimento Artens 17x52 cm"
+input_phrase = "LXHI1V"
 
 # Find top 5 most similar phrases
 top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings)
