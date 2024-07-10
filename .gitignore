@@ -7,3 +7,4 @@ models/
 *.rpt
 *.csv
 *.pkl
+fine-tuned-model
