@@ -1,16 +1,13 @@
 import os
 import numpy as np
 import pandas as pd
-from sentence_transformers import SentenceTransformer, InputExample, losses
+from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import pickle
-from torch.utils.data import DataLoader
-from datasets import Dataset  # Add this import
 
 # Define file paths
 csv_file_path = 'sorted_orcamento.csv'
 embeddings_file_path = 'embeddings_orcamento.pkl'
-feedback_file_path = 'feedback.csv'
 fine_tuned_model_path = 'fine-tuned-model'
 
 # Load the fine-tuned model if available, otherwise load the pre-trained model
@@ -63,56 +60,8 @@ def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, top_n=5):
     
     return top_phrases
 
-# Function to record feedback
-def record_feedback(input_phrase, top_phrases):
-    feedback_data = []
-    print("Please provide feedback for the following suggestions (rate 1 to 5):")
-    for phrase, score in top_phrases:
-        rating = input(f"Phrase: {phrase}, Similarity Score: {score:.4f}, Your Rating: ")
-        feedback_data.append((input_phrase, phrase, score, rating))
-    
-    # Save feedback to CSV
-    feedback_df = pd.DataFrame(feedback_data, columns=['Input Phrase', 'Suggested Phrase', 'Similarity Score', 'Rating'])
-    if not os.path.exists(feedback_file_path):
-        feedback_df.to_csv(feedback_file_path, index=False)
-    else:
-        feedback_df.to_csv(feedback_file_path, mode='a', header=False, index=False)
-
-# Function to fine-tune the model based on feedback
-def fine_tune_model():
-    if not os.path.exists(feedback_file_path):
-        print("No feedback available for fine-tuning.")
-        return
-    
-    feedback_df = pd.read_csv(feedback_file_path)
-    
-    # Create training examples based on feedback
-    train_examples = []
-    for _, row in feedback_df.iterrows():
-        input_phrase = row['Input Phrase']
-        suggested_phrase = row['Suggested Phrase']
-        rating = float(row['Rating'])
-        
-        # Convert rating to a score (e.g., normalize between 0 and 1)
-        score = rating / 5.0
-        
-        # Create input example
-        train_examples.append(InputExample(texts=[input_phrase, suggested_phrase], label=score))
-    
-    # Define a DataLoader for the training examples
-    train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=16)
-    
-    # Use a loss function suitable for fine-tuning based on similarity
-    train_loss = losses.CosineSimilarityLoss(model)
-    
-    # Fine-tune the model
-    model.fit(train_objectives=[(train_dataloader, train_loss)], epochs=1, warmup_steps=100)
-    
-    # Save the fine-tuned model
-    model.save(fine_tuned_model_path)
-
 # Example user input
-input_phrase = "Tritubo Ø 120"
+input_phrase = input("> Enter an article: ")
 
 # Find top 5 most similar phrases
 top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings)
@@ -122,9 +71,6 @@ print("Top 5 most similar phrases:")
 for phrase, score in top_similar_phrases:
     print(f"Phrase: {phrase}, Similarity Score: {score:.4f}")
 
-# Record feedback
-record_feedback(input_phrase, top_similar_phrases)
-
-# Periodically fine-tune the model based on feedback
-# This can be called periodically, for example in a scheduled task
-fine_tune_model()
+# Save top similar phrases for feedback
+with open('top_similar_phrases.pkl', 'wb') as f:
+    pickle.dump((input_phrase, top_similar_phrases), f)
