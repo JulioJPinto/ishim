@@ -45,18 +45,42 @@ else:
         phrases, phrase_embeddings = pickle.load(f)
 
 # Function to find top N most similar phrases to the input phrase
-def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, top_n=5):
+
+def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path, top_n=5):
+    # Read the CSV file
+    df = pd.read_csv(csv_path)
+    
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception as e:
+        print(f"Error reading CSV file: {e}")
+        return []
+
+    # Filter the CSV for the input phrase
+    input_df = df[df['Input Phrase'] == input_phrase]
+
+    # Group by 'Input Phrase' and 'Suggested Phrase' and calculate the average rating
+    avg_ratings = input_df.groupby(['Input Phrase', 'Suggested Phrase'])['Rating'].mean().reset_index()
+
+    # Create a dictionary to map each suggested phrase to its average rating
+    rating_map = dict(zip(avg_ratings['Suggested Phrase'], avg_ratings['Rating']))
+
     # Encode the input phrase
     input_embedding = model.encode([input_phrase])
-    
+
     # Calculate cosine similarity between the input phrase and each phrase in the list
     similarities = cosine_similarity(input_embedding, phrase_embeddings)[0]
+
+    # Adjust similarities by multiplying with the rating
+    adjusted_similarities = [
+        similarities[i] * rating_map.get(phrases[i], 5)/5 for i in range(len(phrases))
+    ]
     
     # Get the indices of the top N most similar phrases
-    top_indices = similarities.argsort()[-top_n:][::-1]
+    top_indices = sorted(range(len(adjusted_similarities)), key=lambda i: adjusted_similarities[i], reverse=True)[:top_n]
     
-    # Get the top N most similar phrases and their similarity scores
-    top_phrases = [(phrases[i], similarities[i]) for i in top_indices]
+    # Get the top N most similar phrases and their adjusted similarity scores
+    top_phrases = [(phrases[i], adjusted_similarities[i]) for i in top_indices]
     
     return top_phrases
 
@@ -64,7 +88,7 @@ def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, top_n=5):
 input_phrase = input("> Enter an article: ")
 
 # Find top 5 most similar phrases
-top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings)
+top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path="feedback.csv", top_n=10)
 
 # Print the top 5 most similar phrases
 print("Top 5 most similar phrases:")
