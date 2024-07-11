@@ -59,13 +59,16 @@ def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path,
     # Filter the CSV for the input phrase
     input_df = df[df['Input Phrase'] == input_phrase]
 
-    # Group by 'Input Phrase' and 'Suggested Phrase' and calculate the average rating
-    avg_ratings = input_df.groupby(['Input Phrase', 'Suggested Phrase'])['Rating'].mean().reset_index()
+    # Aggregate ratings and count for each Suggested Phrase
+    grouped_df = input_df.groupby('Suggested Phrase').agg({'Rating': 'sum', 'Count': 'sum'}).reset_index()
+
+    # Calculate average rating per Suggested Phrase
+    grouped_df['Average Rating'] = grouped_df['Rating'] / (grouped_df['Count']*5)
 
     # Create a dictionary to map each suggested phrase to its average rating
-    rating_map = dict(zip(avg_ratings['Suggested Phrase'], avg_ratings['Rating']))
+    rating_map = dict(zip(grouped_df['Suggested Phrase'], grouped_df['Average Rating']))
 
-    # Encode the input phrase
+    # Encode the input phrase (assuming model.encode function is defined elsewhere)
     input_embedding = model.encode([input_phrase])
 
     # Calculate cosine similarity between the input phrase and each phrase in the list
@@ -73,7 +76,7 @@ def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path,
 
     # Adjust similarities by multiplying with the rating
     adjusted_similarities = [
-        similarities[i] * rating_map.get(phrases[i], 5)/5 for i in range(len(phrases))
+        similarities[i] * rating_map.get(phrases[i], 1) for i in range(len(phrases))
     ]
     
     # Get the indices of the top N most similar phrases
