@@ -53,7 +53,7 @@ parso==0.8.3
 perf==0.1
 pexpect==4.9.0
 pikaur==1.18.3
-pillow==10.2.0
+pillow==10.3.0
 platformdirs==4.1.0
 ply==3.11
 prompt-toolkit==3.0.43
