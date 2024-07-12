@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pandas
+pickle-mixin
+sentence-transformers
+scikit-learn
