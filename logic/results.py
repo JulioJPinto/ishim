@@ -23,11 +23,21 @@ def embeddings_need_update(csv_file, embeddings_file):
         return True
     return os.path.getmtime(csv_file) > os.path.getmtime(embeddings_file)
 
+def process_phrase(phrase):
+    # Tokenize by whitespace
+    tokens = phrase.split()
+    # Sort tokens alphabetically
+    tokens.sort()
+    # Join tokens back into a single string
+    return ' '.join(tokens)
+
 # Function to compute and save embeddings
 def compute_and_save_embeddings(csv_file, embeddings_file):
     # Load phrases from CSV
     df = pd.read_csv(csv_file)
     phrases = df['design'].tolist()
+    
+    phrases = map(process_phrase, phrases)
     
     # Encode the phrases
     phrase_embeddings = model.encode(phrases)
@@ -89,8 +99,16 @@ def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path,
     
     return top_phrases
 
+#binary search for phrase
+def find_phrase(sorted_list, phrase):
+    index = bisect.bisect_left(sorted_list, phrase)
+    if index != len(sorted_list) and sorted_list[index] == phrase:
+        return index
+    return -1
+
 # Example user input
 input_phrase = input("> Enter an article: ")
+input_phrase = process_phrase(input_phrase)
 
 # Find top 5 most similar phrases
 top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path=csv_feedback_file_path, top_n=10)

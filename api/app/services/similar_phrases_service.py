@@ -20,10 +20,17 @@ def load_embeddings():
         return compute_and_save_embeddings()
     with open(embeddings_file_path, 'rb') as f:
         return pickle.load(f)
+    
+def process_phrase(phrase):
+    tokens = phrase.split()
+    tokens.sort()
+    return ' '.join(tokens)
+
 
 def compute_and_save_embeddings():
     df = pd.read_csv(csv_file_path)
     phrases = df['design'].tolist()
+    phrases = map(process_phrase, phrases)
     phrase_embeddings = model.encode(phrases)
     with open(embeddings_file_path, 'wb') as f:
         pickle.dump((phrases, phrase_embeddings), f)
