@@ -94,4 +94,4 @@ typing_extensions==4.9.0
 validate-pyproject==0.13.post1.dev0+gb752273.d20230520
 wcwidth==0.2.13
 xmlschema==3.0.1
-zipp==3.17.0
+zipp==3.19.1
