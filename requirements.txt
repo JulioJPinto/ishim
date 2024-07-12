@@ -69,7 +69,7 @@ pydantic==2.5.3
 pydantic_core==2.14.6
 Pygments==2.17.2
 PyGObject==3.46.0
-pymongo==4.6.1
+pymongo==4.6.3
 pyrsistent==0.19.3
 pyserial==3.5
 python-dateutil==2.8.2
