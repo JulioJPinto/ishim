@@ -6,9 +6,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 import pickle
 
 # Define file paths
-csv_file_path = 'sorted_orcamento.csv'
-embeddings_file_path = 'embeddings_orcamento.pkl'
-fine_tuned_model_path = 'fine-tuned-model'
+csv_file_path = 'data/sorted_orcamento.csv'
+embeddings_file_path = 'data/embeddings_orcamento.pkl'
+csv_feedback_file_path = 'data/feedback.csv'
+fine_tuned_model_path = 'data/fine-tuned-model'
 
 # Load the fine-tuned model if available, otherwise load the pre-trained model
 if os.path.exists(fine_tuned_model_path):
@@ -40,6 +41,7 @@ def compute_and_save_embeddings(csv_file, embeddings_file):
 # Load or compute embeddings as needed
 if embeddings_need_update(csv_file_path, embeddings_file_path):
     phrases, phrase_embeddings = compute_and_save_embeddings(csv_file_path, embeddings_file_path)
+    print("Entered")
 else:
     with open(embeddings_file_path, 'rb') as f:
         phrases, phrase_embeddings = pickle.load(f)
@@ -91,7 +93,7 @@ def find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path,
 input_phrase = input("> Enter an article: ")
 
 # Find top 5 most similar phrases
-top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path="feedback.csv", top_n=10)
+top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path=csv_feedback_file_path, top_n=10)
 
 # Print the top 5 most similar phrases
 print("Top 5 most similar phrases:")

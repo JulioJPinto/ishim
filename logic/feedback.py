@@ -3,7 +3,7 @@ import pandas as pd
 import pickle
 
 # Define file paths
-feedback_file_path = 'feedback.csv'
+feedback_file_path = 'data/feedback.csv'
 
 # Load top similar phrases from results
 with open('top_similar_phrases.pkl', 'rb') as f:
