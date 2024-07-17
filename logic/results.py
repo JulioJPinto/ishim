@@ -110,14 +110,22 @@ def find_phrase(sorted_list, phrase):
 input_phrase = input("> Enter an article: ")
 input_phrase = process_phrase(input_phrase)
 
-# Find top 5 most similar phrases
-top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path=csv_feedback_file_path, top_n=10)
+# Print the instacne of phrases
+phrases_set = set(phrases)
 
-# Print the top 5 most similar phrases
-print("Top 5 most similar phrases:")
-for phrase, score in top_similar_phrases:
-    print(f"Phrase: {phrase}, Similarity Score: {score:.4f}")
+if not (input_phrase in phrases_set):
+    # Find top 5 most similar phrases
+    top_similar_phrases = find_top_similar_phrases(input_phrase, phrases, phrase_embeddings, csv_path=csv_feedback_file_path, top_n=10)
 
-# Save top similar phrases for feedback
-with open('top_similar_phrases.pkl', 'wb') as f:
-    pickle.dump((input_phrase, top_similar_phrases), f)
+    # Print the top 5 most similar phrases
+    print("Top 5 most similar phrases:")
+    for phrase, score in top_similar_phrases:
+        print(f"Phrase: {phrase}, Similarity Score: {score:.4f}")
+
+    # Save top similar phrases for feedback
+    with open('top_similar_phrases.pkl', 'wb') as f:
+        pickle.dump((input_phrase, top_similar_phrases), f)
+        
+else:
+    #Case where it exists
+    print("This phrase exists in the database")
